@@ -1,0 +1,8 @@
+# users sample file
+
+# this file contains a list of users that can access the server.
+
+# Username:Password
+
+pippo:pluto
+tizio:caio

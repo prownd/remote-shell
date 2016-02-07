@@ -1,0 +1,13 @@
+# commands sample file
+
+# this file contains a list of commands that can be executed by
+# the client on the remote machine.
+
+ls
+date
+grep
+mkdir
+pwd
+rm
+ps
+cat
