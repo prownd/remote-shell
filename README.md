@@ -19,7 +19,7 @@ Build & Run
 		 -u </full/path/to/users_file>
 ```
 
-where `port` in the portnumber to which the server listens to (default value is 5000),
+where `port` is the portnumber to which the server listens to (default value is 5000),
 `commands_file` is a file containing the allowed commands that the client can
 execute on this server and `users_file` is a file containig a list of
 username:password fields specifying the users that can access this server.
