@@ -21,7 +21,8 @@
 #define DEFAULT_SERVER_PORT		5000
 #define DEFAULT_PROTOCOL        0
 #define RESULT_BUFFER           32768
-#define RCV_TIMEOUT             5
+#define RCV_TIMEOUT             0
+#define RCV_TIMEOUT_U            100000
 #define RS_PROMPT_CHAR          "$"
 #define LOGIN_CMD               "login"
 
@@ -139,6 +140,7 @@ int main(int argc, char* argv[])
 	/* Set socket to timeout on recv if no data is available */
 	struct timeval tv;
 	tv.tv_sec = RCV_TIMEOUT;    /* set timeout */
+	tv.tv_usec = RCV_TIMEOUT_U;    /* set timeout usec */
 	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,
 	(struct timeval*) &tv, sizeof(struct timeval));
 	

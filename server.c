@@ -71,7 +71,8 @@ int file_exists(const char* path_to_file)
 {
 	FILE* fp;
 	if(path_to_file!= NULL) {
-		if(fp = fopen(path_to_file,"r")) fclose(fp);
+		if((fp = fopen(path_to_file,"r"))==NULL) 
+			fclose(fp);
 		else {
 			printf("File '%s' does not exist\n",path_to_file);
 			return FALSE;   /* Not exists */
